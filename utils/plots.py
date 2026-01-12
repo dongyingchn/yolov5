@@ -16,7 +16,7 @@ import seaborn as sn
 import torch
 from PIL import Image, ImageDraw
 from scipy.ndimage.filters import gaussian_filter1d
-from ultralytics.utils.plotting import Annotator
+from ultralytics.utils.plotting import Annotator, colors as ultralytics_colors
 
 from utils import TryExcept, threaded
 from utils.general import LOGGER, clip_boxes, increment_path, xywh2xyxy, xyxy2xywh
@@ -509,3 +509,45 @@ def save_one_box(xyxy, im, file=Path("im.jpg"), gain=1.02, pad=10, square=False,
         # cv2.imwrite(f, crop)  # save BGR, https://github.com/ultralytics/yolov5/issues/7007 chroma subsampling issue
         Image.fromarray(crop[..., ::-1]).save(f, quality=95, subsampling=0)  # save RGB
     return crop
+
+
+def visualize_detections(im, detections, names, line_thickness=3, hide_labels=False, hide_conf=False):
+    """Visualizes YOLOv5 detection results on an image using the same method as detect.py.
+
+    This function uses the Annotator class from ultralytics.utils.plotting to draw bounding boxes
+    and labels on the image, consistent with the visualization approach in detect.py.
+
+    Args:
+        im (numpy.ndarray): Input image in BGR format (HWC).
+        detections (torch.Tensor | numpy.ndarray): Detection results with format [x1, y1, x2, y2, conf, cls]
+            where (x1, y1) is top-left and (x2, y2) is bottom-right corner.
+        names (dict | list): Class names dictionary or list mapping class indices to names.
+        line_thickness (int): Bounding box line thickness in pixels. Default is 3.
+        hide_labels (bool): If True, hide class labels. Default is False.
+        hide_conf (bool): If True, hide confidence scores. Default is False.
+
+    Returns:
+        numpy.ndarray: Image with detection visualizations drawn.
+
+    Example:
+        ```python
+        from utils.plots import visualize_detections
+        import cv2
+
+        # Load image and run detection
+        im = cv2.imread('image.jpg')
+        detections = model(im)  # [x1, y1, x2, y2, conf, cls] format
+
+        # Visualize detections
+        result = visualize_detections(im, detections, names=['person', 'car', 'dog'])
+        cv2.imwrite('result.jpg', result)
+        ```
+    """
+    annotator = Annotator(im, line_width=line_thickness, example=str(names))
+
+    for *xyxy, conf, cls in detections:
+        c = int(cls)  # integer class
+        label = None if hide_labels else (names[c] if hide_conf else f"{names[c]} {conf:.2f}")
+        annotator.box_label(xyxy, label, color=ultralytics_colors(c, True))
+
+    return annotator.result()
