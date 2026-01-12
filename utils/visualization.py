@@ -313,17 +313,19 @@ def format_detection_string(detections, names, image_shape=None):
         print(s)  # "640x480 2 persons, 1 car"
         ```
     """
-    parts = []
+    result = ""
 
     # Add image shape if provided
     if image_shape is not None:
-        parts.append("{:g}x{:g} ".format(*image_shape))
+        result = f"{image_shape[0]:g}x{image_shape[1]:g} "
 
     # Add detection counts
     if len(detections):
+        detection_parts = []
         for c in detections[:, 5].unique():
             n = int((detections[:, 5] == c).sum())
             class_name = names[int(c)]
-            parts.append(f"{n} {class_name}{'s' * (n > 1)}, ")
+            detection_parts.append(f"{n} {class_name}{'s' * (n > 1)}")
+        result += ", ".join(detection_parts)
 
-    return "".join(parts)
+    return result
