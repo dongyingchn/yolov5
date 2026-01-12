@@ -545,9 +545,10 @@ def visualize_detections(im, detections, names, line_thickness=3, hide_labels=Fa
     """
     annotator = Annotator(im, line_width=line_thickness, example=str(names))
 
-    for *xyxy, conf, cls in detections:
-        c = int(cls)  # integer class
-        label = None if hide_labels else (names[c] if hide_conf else f"{names[c]} {conf:.2f}")
-        annotator.box_label(xyxy, label, color=ultralytics_colors(c, True))
+    if len(detections):
+        for *xyxy, conf, cls in detections:
+            c = int(cls)  # integer class
+            label = None if hide_labels else (names[c] if hide_conf else f"{names[c]} {conf:.2f}")
+            annotator.box_label(xyxy, label, color=ultralytics_colors(c, True))
 
     return annotator.result()
